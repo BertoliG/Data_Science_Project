@@ -1,0 +1,577 @@
+---
+title: "L'evoluzione dell'agricoltura in Italia"
+author: "Bertoli Giovanni"
+output: 
+  ioslides_presentation
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load-packages, include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(highcharter)
+library(tidyverse)
+library(gapminder)
+library(gapminder)
+```
+
+## Introduzione
+
+In questo progetto ho decciso di analizzare come il settore agricolo si è evoluto in questi ultimi anni andando a studiare in particolare:
+
+>* la quantità di terreno disponibile;
+>* il numero delle aziende presenti in italia, suddivise tra Nord, Sud e Centro;
+>* le colture con un più alto taso di produzione, anch'esse suddivise in Nord, Sud e Centro in modo da poter avere anche un'idea di come la loro coltivazione sia divisa nelle varie aree geografiche del paese.
+
+I dati sono stati principalmente ottenuti dai risultati istat del 5° Censimento Generale dell'Agricoltura, che analizza l'evoluzione del settore da 200 al 2010, e da altri dati istat su altri anni.
+
+
+
+## La SAU e la SAT
+
+La superficie adibita all'agricoltura viene chiamata in due modi a seconda di cosa si vuole indicare:
+
+* SAU - Superficie Agricola Utilizzata: è la quantità di terreno adibita a seminativi, coltivazioni legnose agrarie, orti familiari, prati permanenti e pascoli;
+* SAT - superficie Agraria Totale: è la quantità di terreno totale, comprende tutta la SAU più i terreni non usati, i boschi e i terreni usati per l'arboricoltura da legno.  
+
+L'Italia è stato per un lungo tempo un paese prevalentemente agricolo. Infatti, fino alla fine degli anni '60 del Novecento, il 70% del nostro trritorio nazionale era usato per l'agricoltura. 
+
+
+```{r include=FALSE}
+Superficie_Agricola = read.csv("share-of-land-area-used-for-agriculture.csv")
+View("Superficie_Agricola")
+
+
+#Superficie agricola in percentuale
+SA_Ita = Superficie_Agricola %>%
+  filter(Entity == "Italy")
+View(SA_Ita)
+
+SA_Ita = SA_Ita %>%
+  rename(Stato = Entity,
+         Percentuale = Agricultural.land....of.land.area.) %>%
+  mutate_if(is.numeric, round, digits=2)
+
+
+Grafico1 = ggplot(data = SA_Ita, mapping = aes(x = Year, y = Percentuale)) +
+  geom_line(color = "orange", size = 1) +
+  geom_point(color = "black", size = 2) +
+  theme_bw()+
+  labs(title="PERCENTUALE DI TERRENO AGRICOLO", subtitle = "RISPETTO ALLA SUPERFICIE TOTALE")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+Perc_Terra = Grafico1
+```
+```{r}
+Perc_Terra
+```
+
+
+
+## SAT
+
+* Nei primi anno '70 invece, con l'avvento del "miracolo economico", ci fu un enorme sviluppo dell'industria meccanica che non solo portò all'ocupazione di terreno per far posto alle fabbriche, ma fece cominciare un esodo agricolo dalle campagne alle città. Il tutto era comunque accompagnato dalla continua emigrazione degli italiani all'estero. Secondo alcuni dati, nel giro di un anno, ossia tra il '70 e il '71, si perse il 13% delle terre coltivabili e fino al 1982 la quantità di ettari rimase pressoché tale. 
+
+* Dal 1982 si assiste ad un calo inesorabile. Il fatto scatenante che innescò il crollo della terra coltivata fu la definitiva abolizione della mezzadria con la legge N° 203 he imponeva la fine dei contratti a mezzadria  con la loro riconversione in contratti di affitto regolamentati. Questo portò sopratutto nelle zone più rurali all'abbandono di alcune terre che finirono poi per essere usate per altri scopi.
+
+* In tempi più recenti, secondo il 6°Censimento generale, risulta che in 10 anni, ossia dal 2000 al 2010, la SAT si sia ulteriormente ridimensionata da 18.766.895 di ettari a 17.081.099 di ettari, per una diminuzione complessiva dell'area agricola dell'8%.
+
+* Nel 7° censimento, ancora in via di completamento, per il triennio 2018-2020 si denota invece, al contrario delle previsioni fatte a seguito del precedente censimento, come la SAT sia rimasta pressoché invariata.
+
+```{r include=FALSE}
+Territorio_SA = c("Italia", "Italia", "Italia", "Italia", "Italia", "Italia", "Italia", 
+                  "Nord", "Nord", "Nord", "Nord", "Nord", "Nord",
+                  "Centro", "Centro", "Centro", "Centro", "Centro", "Centro",
+                  "Sud", "Sud", "Sud", "Sud", "Sud", "Sud",
+                  "Isole", "Isole", "Isole","Isole", "Isole","Isole")
+Anno_S = c(1980, 1990, 2000, 2010, 2013, 2016, 2020,
+             1980, 1990, 2000, 2010, 2013, 2016,
+             1980, 1990, 2000, 2010, 2013, 2016,
+             1980, 1990, 2000, 2010, 2013, 2016,
+             1980, 1990, 2000, 2010, 2013, 2016)
+Ettari_T = c(22397832, 21628354, 18766895,	17081099, 16678296, 16525472, 16500000,
+             3905692+4516683,	3659296+4416186,	3127737+4003085,	2745984+3538563, 2611413+3583558, 2613237+3470763,
+             4478193,	4339831,	3898891,	3349801, 3260730, 3203268, 
+             5687377,	5483745,	4683196,	4426634, 4261041, 4162237,
+             3809884,	3729295,	3053984,	3020115, 2961554, 3075967)
+
+Tot_Ett <- data.frame(Territorio_SA, Anno_S, Ettari_T)
+Tot_Ett_ITA = Tot_Ett %>%
+  filter(Territorio_SA == "Italia")
+
+Grafico2 = ggplot(data = Tot_Ett_ITA, mapping = aes(x = Anno_S, y = Ettari_T, label=Anno_S)) +
+  geom_area(color = "green", fill = "#99FF99", size = 1) +
+  geom_point(color = "#339900", size = 2) +
+  geom_text(hjust=0, vjust=0)+
+  theme_bw()+
+  labs(title="SAT", subtitle = "SUPERFICIE AGRARIA TOTALE")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+SAT_ITA = Grafico2
+```
+```{r}
+SAT_ITA
+```
+
+
+## SAU
+
+* Anch'essa, come la SAT, Ha subito un notevole ridimensionamento.
+
+* Secondo uno studio dell'ISPRA (Istituto Superiore Per la Protezione e la Ricerca Ambientale), la maggio parte delle volte la causa della perdita di terreno sono la cementificazione o l’abbandono delle terre,  inoltre "*l’aumento del consumo di suolo non va di pari passo con la crescita demografica; in Italia cresce più il cemento che la popolazione*".
+
+* Se nel 4°, 5° e 6° censimento (rispettivamente periodo 1882-1990, 1990-2000, 2000-2010) la SAU è diminuita, passando da  quasi 16 milioni di ettari nell'82 a 12,5 milioni nel 2020; al contrario della SAT però dal 2013 al 2016 c'è stato un'aumento della superficie che poi si è quasi mantenuto fino al 2020, che di fatto risulta avere una SAU maggiore di quella che avevamo nel 2010.
+
+
+```{r include=FALSE}
+#SAU
+Territorio_SA = c("Italia", "Italia", "Italia", "Italia", "Italia", "Italia", "Italia",
+                  "Nord", "Nord", "Nord", "Nord", "Nord", "Nord",
+                   "Centro", "Centro", "Centro", "Centro", "Centro", "Centro",
+                   "Sud", "Sud", "Sud", "Sud", "Sud", "Sud",
+                   "Isole", "Isole", "Isole","Isole", "Isole","Isole")
+Ettari_U = c(15832612,	15025954,	13181859,	12856047, 12425996, 12598161, 12500000,
+             2594575+2885696,	2409917+2807024,	2243192+2632288,	2096984+2471851, 1977787+2430210, 2010271+2430899,
+             2837519,	2684815,	2435199,	2191651, 2053889, 2088305,
+             4389425,	4168539,	3571516,	3554348, 3447018, 3442377,
+             3125395,	2955656,	2299661,	2541211, 2517091, 2626309 )
+
+Ett_Ut <- data.frame(Territorio_SA, Anno_S, Ettari_U)
+Ett_Ut_ITA = Ett_Ut %>%
+  filter(Territorio_SA == "Italia")
+
+Grafico3 = ggplot(data = Ett_Ut_ITA, mapping = aes(x = Anno_S, y = Ettari_U, label=Anno_S)) +
+  geom_area(color = "black", fill = "#CCCC99", size = 1) +
+  geom_point(color = "green", size = 2) +
+  geom_text(hjust=0, vjust=0)+
+  theme_bw()+
+  labs(title="SAU", subtitle = "Superficie Agricola Utilizzata")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  
+SAU_ITA = Grafico3
+```
+```{r}
+SAU_ITA
+```
+
+* Possiamo poi osservare come la SAU è diminuita in modo quasi proporzionale alla SAT.
+
+```{r include=FALSE}
+#Mettiamo insieme SAT e SAU
+Analisi_SUP = left_join(Tot_Ett_ITA, Ett_Ut_ITA)
+Analisi_SUP
+
+Grafico4 = ggplot(data = Analisi_SUP, mapping = aes(x = Anno_S)) +
+  geom_line(aes(y = Ettari_T), color = "green", size = 1) +
+  geom_line(aes(y = Ettari_U), color = "black", size = 1) +
+  geom_point(aes(y = Ettari_T),color = "#339900", size = 2) +
+  geom_point(aes(y = Ettari_U),color = "green", size = 2) +
+  theme_bw()+
+  labs(title="SAU e SAT A COMFRONTO", subtitle = "DAL 1982 AL 2010")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+Analisi_S_Gra = Grafico4
+```
+```{r}
+Analisi_S_Gra
+```
+
+
+## Le aziende
+
+* Ovviamente al variare della quantità di terreno disponibile varia anche il numero di aziende, ma esse hanno avuto crolli molto significativi, basati su leggi come la N° 203 o l'avanzamento tecnologico.
+
+* Come accenato all'inizio, nei primi anni '70 ci stiamo avviando verso la fine del miracolo economico. In quel periodo si è progressivamente ridotta la forte pressione sulla terra che aveva caratterizzato l’agricoltura italiana e condizionato l’ammodernamento delle sue strutture aziendali. 
+
+* La prima grande riduzione del numero delle aziende è stata censita tra il 1961 e il 1970, nella quale si passò da 4,2 milioni di aziende a 3,6 milioni, quando ancora l’esodo agricolo era in pieno svolgimento, successivamente questa riduzione si attenua negli anni ’80 arrivando a 3,1 milioni. Negli anni Novanta il numero delle aziende agricole si ridimensiona ulteriormente, 2,8 milioni. Si arriva poi agli anni 2000 in cui la quantità di aziende si ridimensiona di nuovo a 2,4 milioni, per poi crollare a 1,6 milioni nel 2010 e ad 1,1 milioni circa nel 2020.
+
+*La riduzione che vede interessato il periodo che va dal 2000 al 2020 vede una riduzione che non ha precedenti del numero delle micro aziende (ovvero  le attività di tipo imprenditoriale che hanno da 0 a 10 dipendenti e il cui volume d’affari fatturato in un anno non supera i 2 milioni di euro). In concomitanza si è creato un processo di formazione di medie (meno di 250 dipendenti e  fatturato  inferiore a 40 milioni) e grandi imprese.
+
+```{r include=FALSE}
+#creazione database Aziende Italia
+Territorio_ITA = c("Italia", "Italia", "Italia", "Italia", "Italia", "Italia", "Italia")
+Anno_ITA = c(1961, 1970, 1980, 1990, 2000, 2010, 2020)
+Aziende_ITA = c(4.2, 3.6, 3.1, 2.8, 2.4, 1.6, 1.1)
+
+Az_Ist_ITA <- data.frame(Territorio_ITA, Anno_ITA, Aziende_ITA)
+
+
+Grafico5 = ggplot(data = Az_Ist_ITA, mapping = aes(x = Anno_ITA, y = Aziende_ITA, label=Anno_ITA)) +
+  geom_line()+
+  geom_point(color = "red", size = 2) +
+  geom_text(hjust=0, vjust=0)+
+  theme_bw()+
+  labs(title="NUMERO AZIENDE PRESENTI IN ITALIA", subtitle = "IN MILIONI")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+N_Az_ITA = Grafico5
+```
+```{r}
+N_Az_ITA
+```
+
+
+## Come sono suddivise le aziende sul teritorio
+
+In generale la maggior parte delle aziende agricole, poco più del 50%, si trova nel Sud Italia e nelle Isole.
+
+```{r include=FALSE}
+#creazione database Aziende per Territorio
+Territorio = c("Nord", "Nord", "Nord", "Nord", "Nord", "Nord",
+               "Centro", "Centro", "Centro", "Centro", "Centro", "Centro",
+               "Sud", "Sud", "Sud", "Sud", "Sud", "Sud",
+               "Isole", "Isole", "Isole","Isole", "Isole","Isole")
+Anno = c(1980, 1990, 2000, 2010, 2013, 2016,
+         1980, 1990, 2000, 2010, 2013, 2016,
+         1980, 1990, 2000, 2010, 2013, 2016,
+         1980, 1990, 2000, 2010, 2013, 2016)
+Aziende = c(0.44+0.52,0.46+0.36,0.36+0.22,0.25+0.14,0.23+0.12,0.17+0.1,
+            0.52,	0.48,	0.42,	0.25, 0.22, 0.18,
+            1.08,	1.02,	0.92,	0.69, 0.63, 0.48,
+            0.54,	0.50,	0.45,	0.28, 0.25, 0.20)
+
+Az_Ist <- data.frame(Territorio, Anno, Aziende)
+
+
+Grafico6 = ggplot(data = Az_Ist) +
+  geom_col(mapping = aes(x = Anno, y = Aziende, fill = Territorio), position = "dodge")+
+  theme_bw()+
+  labs(title="NUMERO AZIENDE PRESENTI IN ITALIA PER TERRITORIO", subtitle = "IN MILIONI")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+N_Az_T = Grafico6
+```
+```{r}
+N_Az_T
+```
+
+Nonostante ciò, la distribuzione della superficie agraria è maggiore al Nord, dove di fatto si sfruttano le terre della Pianura Padana, da sempre "culla" della produzione dei cereali nel nostro paese.
+
+```{r include=FALSE}
+Ett_Reg = Ett_Ut %>%
+  filter(Territorio_SA != "Italia") %>%
+  rename(Territorio_Reg = Territorio_SA,
+         Anno_Reg = Anno_S,
+         Ettari_Reg = Ettari_U)
+
+Grafico7 = ggplot(Ett_Reg, aes(x=Territorio_Reg,y=Ettari_Reg, fill=Territorio_Reg)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="SUPERFICIE DI PRODUZIONE PER ZONA")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+SU_Ter = Grafico7
+```
+```{r}
+SU_Ter
+```
+
+
+## Le maggiori colture in Italia
+
+* Le principali coltivazioni in italia sono quelle di:
+
+>* Uva da tavola
+>* Uva per vino
+>* Olive
+>* Orzo
+>* Mais
+>* Riso
+>* Frumento
+
+Come vedremo successivamente, la maggior parte della produzione cerealicola risiederà nel nord del paese per via della maggiore disponibilità d'acqua, al contrario le coltivazioni legnose quali uva e olive saranno un po' più differenziate. 
+
+```{r include=FALSE}
+Territorio_Prod = c("Nord", "Nord", "Nord", "Nord",
+                    "Centro", "Centro", "Centro", "Centro",
+                    "Mezzogiorno", "Mezzogiorno", "Mezzogiorno", "Mezzogiorno")
+
+Anno_Col = c(2010, 2013, 2016, 2020,
+             2010, 2013, 2016, 2020,
+             2010, 2013, 2016, 2020)
+
+T_Frumento_Tenero = c(2226712.2,	2557518.6,	2426724.7, 2090825.3,	
+                      504189.6,	553584.7,	306078.8, 336784.1,
+                      205885.7,	257423.7,	273872.2, 259529.8)
+
+T_Frumento_Duro = c(542014.3,	266345.8,	870731.7, 415688.8,	
+                    1021642.5,	890218.7,	31115654.8, 889215.1,
+                    2448071.2,	2898932.3,	3142818.5, 2691788)
+
+T_Mais = c(7800142.9,	7317568.1,	6332379, 6269357.4,
+           537325.6,	472328.6,	357024.2, 351637,	
+           228713.3,	214832.4,	213927.4, 223657)
+
+T_Riso = c(1547600,	1403131,	1565609, 1482316.7,
+           2224,	2388,	2090, 1064.7,	
+           27002,	27592, 30328, 29676.1)
+
+T_Orzo = c(403426.8,	371261.8,	467739.8, 510876.8,
+           226394.9,	237185.8,	245364.9, 303705.7,	
+           327170.7,  278028.5,	288393.7, 284484.2)
+
+T_Uva_Vino = c(2954857.3,	3080045.5,	3310589.7, 592216.9+2782715.7,	
+               900726.7, 897145,	903857.7, 823866.2,
+               2758010.5,	3035946, 3121927.5, 2196363.7+758812.4)
+
+T_Uva_Tavola = c(2625.3,	2662,	2176.5, 1825.5+3314.1,	
+                 21166.7,	19124,	20443.9, 18023.6,
+                 1386445.6,	1105591.1,	1034922.6, 648708.3+367970.2)
+
+T_Olive= c(53889.1,	50532.4,	60142, 72919.4,
+           426338.2,	330432.8,	326187.2, 343465.4,
+           2923931.9,	2700045,	1827085.9, 1887746)
+
+
+Coltivazioni <- data.frame(Territorio_Prod, Anno_Col, T_Frumento_Tenero, T_Frumento_Duro, T_Mais, T_Riso, T_Orzo, 
+                           T_Uva_Vino, T_Uva_Tavola, T_Olive)
+```
+
+## Uva da tavola e uva da vino
+
+Quasi la metà dei vigneti si trova nel Sud del paese (in particolare in Puglia e in Sicilia), secondo il Nord (soprattutto il Veneto), e il resto nel Centro Italia dove primeggia la Toscana. 
+
+* La produzione di uva da tavola avviene quasi esclusivamente nel Sud Italia.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+Grafico13 = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Uva_Tavola, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI UVA DA TAVOLA")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+UVA_T = Grafico13
+```
+```{r}
+UVA_T
+```
+
+* La produzione di uva a scopo vitivinicolo avviene prevalentemente al Nord, anche se una grossa fetta proviene anch'essa dal Mezzogiorno.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+Grafico14 = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Uva_Vino, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI UVA DA VINO")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+UVA_V = Grafico14
+```
+```{r}
+UVA_V
+```
+
+
+## Olive
+
+Dopo la Spagna, l'Italia è il secondo produttore di olio di oliva in Europa e nel mondo. La produzione di olive avviene prevalentemente nel Sud del paese e per una piccola parte dal centro.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+GraficoOL = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Olive, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI OLIVE")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+OLIVE = GraficoOL
+```
+```{r}
+OLIVE
+```
+
+## Orzo
+
+Similmente al frumento tenero, la superficie nazionale dedicata alla sua coltivazione è andata contraendosi nel corso degli anni '90 ed è maggiormente coltivato al Nord. Inoltre l'attuale produzione di orzo è leggermente inferiori al fabbisogno nazionale. Gli usi più noti dell'orzo sono relativi soprattutto alla sua trasformazione in malto, o anche per farne bevande alcoliche come birra e whisky
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+GraficoOR = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Orzo, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI ORZO")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+ORZ = GraficoOR
+```
+```{r}
+ORZ
+```
+
+
+## Mais
+
+Il mais è il cereale di maggiore interesse per l'agricoltura italiana per l'elevata potenzialità produttiva della coltura; in seguito alle nuove norme comunitarie di politica agraria, il mais è oggi nel nostro Paese, in particolare per le zone irrigue, una
+coltura di riferimento più che mai strategica, con risultati produttivi tra i più elevati al mondo.
+
+Il mais ha, inoltre, una superiore competitività rispetto agli altri cereali foraggeri e gode di buone prospettive per usi industriali, tra i quali la produzione di farina e olio di semi di mais. Anche il mais, come l'orzo, può essere usato per la produzione di bevande alcoliche come bourbon e whisky. 
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+GraficoMAIS = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Mais, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI MAIS")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+MAIS = GraficoMAIS
+```
+```{r}
+MAIS
+```
+
+
+## Riso
+
+L'Italia è il principale produttore di riso dell'UE con la maggioranza della superficie di produzione collocata principalmente nella regione Piemonte e in Lombardia. L'introduzione di varie varietà adatte al mercato europeo hanno permesso di rendere solido il mercato risicolo italiano.
+
+Ovviamente la produzione di riso è prevalentemente esclusiva del Nord Italia, che dispone di una maggiore disponibilità d'acqua.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+GraficoR = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Riso, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI RISO")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+RISO = GraficoR
+```
+```{r}
+RISO
+```
+
+
+## Frumento
+
+In Italia coltiviamo due tipi di frumento:
+
+* Il **frumento duro**:  fornisce la materia prima all'industria delle paste alimentari, pur se
+poco diffuso a livello mondiale rispetto al frumento tenero, riveste un primario interesse nel nostro Paese, in
+particolare nel meridione dove è coltivato in aree caratterizzate da carenza idrica.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+GraficoFD = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Frumento_Duro, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI FRUMENTO DURO")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+Gr_FD = GraficoFD
+```
+```{r}
+Gr_FD
+```
+
+* Il **frumento tenero**: la sua superficie di produzione è calata negli ultimi anni, di questa riduzione si sono avvantaggiati i Paesi Nord Europei, come Francia, Inghilterra, Austria e Germania, dotati di condizioni ambientali più favorevoli  e di un
+contributo della ricerca a sostegno dell'attività produttiva più incisivo. Questo prodotto viene usato principalmente per fare farine. Contrariamente a quello duro è più apprezzato al nord.
+
+```{r include=FALSE}
+Colt_20 = Coltivazioni %>%
+  filter(Anno_Col == 2020)
+
+Grafico9 = ggplot(Colt_20, aes(x=Territorio_Prod,y=T_Frumento_Tenero, fill=Territorio_Prod)) + 
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar()+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        panel.grid=element_blank(),
+        axis.ticks = element_blank(),
+        plot.title=element_text(size=14, face="bold"))+
+  theme(axis.text.y=element_blank())+
+  labs(title="PRODUZIONE DI FRUMENTO TENERO")+
+  theme(plot.title = element_text(hjust = 0.5))
+  
+Gr_TN = Grafico9
+```
+```{r}
+Gr_TN
+```
+
+
+
+
+
+
+## Sitografia
+* https://ourworldindata.org/
+* http://dati.istat.it/
+
